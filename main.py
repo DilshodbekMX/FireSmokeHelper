@@ -38,15 +38,6 @@ def get_filepath(save_path, file_name, file_suffix):
     return file_path
 
 
-def get_filepath2(save_path, file_name, file_suffix):
-    global file_num
-    file_path = save_path + file_name + file_suffix
-    while file_exists(file_path):
-        file_num += 1
-        file_path = save_path + file_name + file_suffix
-    return file_path
-
-
 def on_snapshot(col_snapshot, changes, read_time):
     for doc in col_snapshot:
         dict_doc = doc.to_dict()
@@ -59,6 +50,14 @@ def on_snapshot(col_snapshot, changes, read_time):
 
 
 col_query = db.collection("Cameras")
+docs = db.collection("Cameras").stream()
+for doc in docs:
+    dict_doc = doc.to_dict()
+    camera_ids.append(doc.id)
+    camera_urls.append(dict_doc["web_address"])
+    user_ids.append(dict_doc["offline_user_id"])
+    camera_names.append(dict_doc["camera_name"])
+    online_user_ids.append(dict_doc["online_user_id"])
 query_watch = col_query.on_snapshot(on_snapshot)
 
 
@@ -70,12 +69,16 @@ def upload_to_local():
         os.makedirs(save_path)
     global countdown_timestamp, countdown
     i = 0
+    print(i)
     while True:
+        print(i)
+        print((len(camera_urls)))
         if len(camera_urls) <= 0:
             break
         if i % len(camera_urls) == 0 and i >= 1000:
             i = 0
         name = camera_urls[i % len(camera_urls)]
+        print(name)
         if urllib.request.urlopen(name).getcode() == 200:
             vid = cv2.VideoCapture(name)
             while True:
@@ -142,7 +145,5 @@ def upload_to_local():
             cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
-    while True:
-        print("upload_to_local: ")
-        upload_to_local()
+
+upload_to_local()
